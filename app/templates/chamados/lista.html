@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Meus Chamados' if is_meus_chamados else 'Lista de Chamados' }}{% endblock %}
+
+{% block content %}
+<div class="page-container page-chamados">
+    
+    <header class="chamados-top-header">
+        <div>
+            <h1 class="page-title">{{ 'Meus Chamados' if is_meus_chamados else 'Chamados' }}</h1>
+            {% if is_meus_chamados %}
+                <p class="page-subtitle">Acompanhe as suas solicitações de suporte abertas na ETEC.</p>
+            {% else %}
+                <p class="page-subtitle">Fila centralizada de atendimento para a equipe de suporte técnico.</p>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{{ url_for('chamados.criar') }}" class="btn btn-primary btn-new-ticket">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Novo Chamado</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Barra de Filtros por Status (Pílulas) -->
+    <div class="filter-pills-bar" role="tablist" aria-label="Filtrar por status">
+        <a href="?status=todos{% if search_term %}&busca={{ search_term }}{% endif %}" 
+           class="filter-pill {% if not current_status or current_status == 'todos' %}active{% endif %}">
+            Todos
+        </a>
+        <a href="?status=em andamento{% if search_term %}&busca={{ search_term }}{% endif %}" 
+           class="filter-pill {% if current_status == 'em andamento' %}active{% endif %}">
+            Em andamento
+        </a>
+        <a href="?status=resolvidos{% if search_term %}&busca={{ search_term }}{% endif %}" 
+           class="filter-pill {% if current_status == 'resolvidos' or current_status == 'resolvido' %}active{% endif %}">
+            Resolvidos
+        </a>
+        <a href="?status=pendentes{% if search_term %}&busca={{ search_term }}{% endif %}" 
+           class="filter-pill {% if current_status == 'pendentes' or current_status == 'pendente' %}active{% endif %}">
+            Pendentes
+        </a>
+    </div>
+
+    <!-- Barra de Pesquisa e Filtros Rápidos -->
+    <div class="search-filter-box">
+        <form method="GET" class="search-form">
+            {% if current_status and current_status != 'todos' %}
+                <input type="hidden" name="status" value="{{ current_status }}">
+            {% endif %}
+            <div class="search-input-group">
+                <span class="search-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
+                <input 
+                    type="search" 
+                    name="busca" 
+                    class="search-input" 
+                    placeholder="Buscar por descrição, sala ou nome..." 
+                    value="{{ search_term or '' }}"
+                    aria-label="Buscar chamados"
+                >
+                {% if search_term %}
+                    <a href="?status={{ current_status or 'todos' }}&ordem={{ current_ordem or 'recentes' }}&data={{ current_data or '' }}" class="search-clear-btn" title="Limpar busca">&times;</a>
+                {% endif %}
+            </div>
+
+            <div class="filter-controls-group" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <input 
+                    type="date" 
+                    name="data" 
+                    class="filter-control-date" 
+                    value="{{ current_data or '' }}" 
+                    title="Filtrar por data" 
+                    aria-label="Filtrar por data"
+                >
+                <select name="ordem" class="filter-control-select" aria-label="Ordenar chamados">
+                    <option value="recentes" {% if current_ordem == 'recentes' %}selected{% endif %}>Recentes primeiro</option>
+                    <option value="antigos" {% if current_ordem == 'antigos' %}selected{% endif %}>Antigos primeiro (Fila)</option>
+                </select>
+                <button type="submit" class="btn btn-search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                    <span>Filtrar</span>
+                </button>
+                {% if current_data or search_term or current_ordem == 'antigos' %}
+                    <a href="?status={{ current_status or 'todos' }}" class="btn btn-outline" style="min-height: 42px; padding: 0.5rem 0.8rem; font-size: 0.85rem;" title="Limpar filtros">Limpar</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela de Chamados -->
+    <div class="table-container">
+        {% if tickets and tickets|length > 0 %}
+            <table class="data-table" aria-label="Tabela de Chamados de Suporte">
+                <thead>
+                    <tr>
+                        <th class="col-id" scope="col">#</th>
+                        <th class="col-desc" scope="col">Descrição</th>
+                        <th class="col-room" scope="col">Sala</th>
+                        {% if not is_meus_chamados %}
+                            <th class="col-requester" scope="col">Solicitante</th>
+                        {% endif %}
+                        <th class="col-status" scope="col">Status</th>
+                        {% if is_meus_chamados %}
+                            <th class="col-date" scope="col">Data</th>
+                        {% endif %}
+                        <th class="col-actions" scope="col">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                        <tr>
+                            <!-- Número / Posição na Fila -->
+                            <td class="col-id">
+                                {% if ticket.posicao_fila and ticket.status in ['Aberto', 'Em andamento'] %}
+                                    <span class="ticket-id-tag queue-tag" title="Posição na fila: {{ ticket.posicao_fila }} (Protocolo: #{{ ticket.numero }})">Fila #{{ ticket.posicao_fila }}</span>
+                                {% else %}
+                                    <span class="ticket-id-tag" title="Protocolo oficial">#{{ ticket.numero }}</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Descrição e Máquina -->
+                            <td class="col-desc">
+                                <div class="ticket-info-cell">
+                                    <strong class="ticket-title">{{ ticket.titulo }}</strong>
+                                    {% if ticket.maquina %}
+                                        <span class="machine-tag">{{ ticket.maquina }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+
+                            <!-- Sala -->
+                            <td class="col-room">
+                                <span class="room-text">{{ ticket.sala }}</span>
+                            </td>
+
+                            <!-- Solicitante (para técnicos) -->
+                            {% if not is_meus_chamados %}
+                                <td class="col-requester">
+                                    <span class="requester-name">{{ ticket.solicitante_nome }}</span>
+                                </td>
+                            {% endif %}
+
+                            <!-- Status com Badge Colorido Institucional -->
+                            <td class="col-status">
+                                {% if ticket.status == 'Resolvido' %}
+                                    <span class="badge badge-resolvido">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        <span>Resolvido</span>
+                                    </span>
+                                {% elif ticket.status == 'Em andamento' %}
+                                    <span class="badge badge-andamento">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        <span>Em andamento</span>
+                                    </span>
+                                {% elif ticket.status == 'Pendente' %}
+                                    <span class="badge badge-pendente">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        <span>Pendente</span>
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-aberto">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+                                        <span>Aberto</span>
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Data (para professor) -->
+                            {% if is_meus_chamados %}
+                                <td class="col-date">
+                                    <span class="date-text">{{ ticket.data_abertura }}</span>
+                                </td>
+                            {% endif %}
+
+                            <!-- Ações Sólidas e Robustas (Inspiradas na Referência) -->
+                            <td class="col-actions">
+                                <div class="action-buttons-group">
+                                    {% if logged_user.perfil == 'admin' %}
+                                        {% if ticket.status != 'Resolvido' %}
+                                            <button 
+                                                type="button" 
+                                                class="btn-table-action btn-assign-primary"
+                                                onclick="openAssignModal('{{ ticket.id }}', '{{ ticket.numero }}', '{{ ticket.titulo }}', '{{ ticket.sala }}', '{{ ticket.tecnico_id or '' }}')"
+                                                title="Atribuir este chamado a um técnico"
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                                <span>Atribuir</span>
+                                            </button>
+                                        {% endif %}
+                                        
+                                        <a href="{{ url_for('chamados.detalhe', ticket_id=ticket.id) }}" class="btn-table-action btn-view" title="Ver detalhes do chamado">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                            <span>Ver</span>
+                                        </a>
+                                    {% elif logged_user.perfil == 'tecnico' %}
+                                        <a href="{{ url_for('chamados.detalhe', ticket_id=ticket.id) }}" class="btn-table-action btn-view" title="Ver detalhes do chamado">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                            <span>Ver</span>
+                                        </a>
+                                        {% if ticket.status == 'Em andamento' and ticket.tecnico_id == logged_user.id %}
+                                            <a href="{{ url_for('chamados.finalizar', ticket_id=ticket.id) }}" class="btn-table-action btn-assign-primary" style="background-color: #0E243A;" title="Finalizar este chamado">
+                                                <span>Finalizar</span>
+                                            </a>
+                                        {% endif %}
+                                    {% else %}
+                                        <a href="{{ url_for('chamados.detalhe', ticket_id=ticket.id) }}" class="btn-table-action btn-view" title="Ver detalhes do chamado">
+                                            <span>Ver</span>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <!-- Estado Vazio Amigável -->
+            <div class="empty-state-card">
+                <div class="empty-icon" aria-hidden="true">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                </div>
+                <h3>Nenhum chamado encontrado</h3>
+                <p>Não há registros para os filtros selecionados no momento.</p>
+                <div class="empty-actions">
+                    <a href="{{ url_for('chamados.meus_chamados' if is_meus_chamados else 'chamados.lista') }}" class="btn btn-outline">Limpar Filtros</a>
+                    <a href="{{ url_for('chamados.criar') }}" class="btn btn-primary">Abrir Novo Chamado</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- MODAL DE ATRIBUIÇÃO DE CHAMADO (Conforme atribuir_chamado.png) -->
+<div class="modal-backdrop" id="assignModal" aria-hidden="true" role="dialog" aria-labelledby="assignModalTitle">
+    <div class="modal-dialog">
+        <header class="modal-header">
+            <h2 class="modal-title" id="assignModalTitle">Atribuir chamado</h2>
+            <button type="button" class="modal-close" onclick="closeAssignModal()" aria-label="Fechar modal">&times;</button>
+        </header>
+
+        <form action="{{ url_for('chamados.atribuir') }}" method="POST" id="formAssign">
+            <input type="hidden" name="ticket_id" id="modalTicketId" value="">
+
+            <div class="modal-body">
+                <div class="modal-ticket-summary">
+                    <h3 class="summary-title" id="modalTicketTitle">Chamado #0000 - Título</h3>
+                    <p class="summary-subtitle" id="modalTicketRoom">Sala: ...</p>
+                </div>
+
+                <!-- Opções de Rádio -->
+                <div class="assign-options-group">
+                    <label class="radio-card">
+                        <input type="radio" name="assign_type" value="me" checked onchange="toggleTechSelect(false)">
+                        <span class="radio-label-text">
+                            <strong>Atribuir a mim</strong>
+                            <small>Assumir a responsabilidade direta por este atendimento</small>
+                        </span>
+                    </label>
+
+                    <label class="radio-card">
+                        <input type="radio" name="assign_type" value="other" onchange="toggleTechSelect(true)">
+                        <span class="radio-label-text">
+                            <strong>Atribuir para outro técnico</strong>
+                            <small>Designar o atendimento para um colega da equipe</small>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Campo de Seleção do Técnico (habilitado ao escolher 'outro') -->
+                <div class="form-group" id="techSelectContainer" style="display: none; margin-top: 1rem;">
+                    <label for="selectTecnicoId" class="form-label">Técnico responsável</label>
+                    <div class="select-wrapper">
+                        <select name="tecnico_id" id="selectTecnicoId" class="form-control form-select">
+                            <option value="" disabled selected>Selecione um técnico</option>
+                            {% for tech in technicians %}
+                                <option value="{{ tech.id }}">{{ tech.nome }} ({{ tech.cargo }})</option>
+                            {% endfor %}
+                        </select>
+                        <span class="select-chevron" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeAssignModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="btnSaveAssign">Salvar</button>
+            </footer>
+        </form>
+    </div>
+</div>
+{% endblock %}

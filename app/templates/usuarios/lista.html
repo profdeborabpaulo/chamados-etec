@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestão de Usuários{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    
+    <header class="chamados-top-header">
+        <div>
+            <h1 class="page-title">Usuários</h1>
+            <p class="page-subtitle">Gerencie os acessos institucionais de professores e técnicos.</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('modalNovoUsuario').style.display='flex'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Novo Usuário</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="table-container">
+        <table class="data-table" aria-label="Tabela de Usuários">
+            <thead>
+                <tr>
+                    <th scope="col">Nome</th>
+                    <th scope="col">E-mail Institucional</th>
+                    <th scope="col">Cargo</th>
+                    <th scope="col">Perfil</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div class="user-avatar" style="background-color: {{ u.avatar_cor }}; width: 34px; height: 34px; font-size: 0.8rem;">
+                                    {{ u.nome[:2].upper() }}
+                                </div>
+                                <strong>{{ u.nome }}</strong>
+                            </div>
+                        </td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.cargo }}</td>
+                        <td>
+                            {% if u.perfil == 'admin' %}
+                                <span class="badge badge-navy" style="background-color: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                                    <span>Técnico-Admin</span>
+                                </span>
+                            {% elif u.perfil == 'tecnico' %}
+                                <span class="badge badge-navy">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                                    <span>Técnico</span>
+                                </span>
+                            {% else %}
+                                <span class="badge badge-neutral">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                                    <span>Professor</span>
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-resolvido">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>Ativo</span>
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- Modal Novo Usuário -->
+<div class="modal-backdrop" id="modalNovoUsuario" style="display: none;">
+    <div class="modal-dialog">
+        <header class="modal-header">
+            <h2 class="modal-title">Cadastrar Novo Usuário</h2>
+            <button type="button" class="modal-close" onclick="document.getElementById('modalNovoUsuario').style.display='none'">&times;</button>
+        </header>
+        <form action="{{ url_for('usuarios.novo') }}" method="POST">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nome Completo *</label>
+                    <input type="text" name="nome" class="form-control" placeholder="Ex: Lucas Ferreira" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">E-mail Institucional *</label>
+                    <input type="email" name="email" class="form-control" placeholder="lucas.ferreira@etec.sp.gov.br" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Perfil de Acesso *</label>
+                    <div class="select-wrapper">
+                        <select name="perfil" class="form-control form-select" required>
+                            <option value="professor">Professor / Funcionário</option>
+                            <option value="tecnico">Técnico (Suporte)</option>
+                            <option value="admin">Técnico-Administrador</option>
+                        </select>
+                        <span class="select-chevron">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cargo / Disciplina</label>
+                    <input type="text" name="cargo" class="form-control" placeholder="Ex: Professor de Química">
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('modalNovoUsuario').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Cadastrar</button>
+            </footer>
+        </form>
+    </div>
+</div>
+{% endblock %}

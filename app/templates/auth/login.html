@@ -1,0 +1,179 @@
+{% extends 'auth/base_auth.html' %}
+
+{% block title %}Acesse o Sistema{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    
+    <!-- Painel Esquerdo: Identidade Visual Institucional ETEC (Imagem/Branding) -->
+    <aside class="auth-brand-panel" aria-label="Identidade Visual do Suporte Técnico ETEC">
+        <!-- Linhas e curvas decorativas orgânicas e sutis de fundo -->
+        <div class="brand-bg-decor" aria-hidden="true">
+            <svg viewBox="0 0 450 650" fill="none" preserveAspectRatio="none">
+                <path d="M-60 120 C 120 70, 180 280, 500 160" stroke="rgba(255, 255, 255, 0.07)" stroke-width="2" />
+                <path d="M-60 320 C 160 250, 220 480, 500 380" stroke="rgba(255, 255, 255, 0.07)" stroke-width="2" />
+                <path d="M-60 480 C 100 420, 260 620, 500 540" stroke="rgba(255, 255, 255, 0.05)" stroke-width="2" />
+            </svg>
+        </div>
+
+        <div class="brand-top">
+            <div class="brand-logo-img-box">
+                <img src="{{ url_for('static', filename='img/etec_logo_grande_branco.png') }}" alt="Logo ETEC - Escola Técnica Estadual" class="brand-etec-logo">
+            </div>
+            <span class="brand-system-clean-title">Suporte Técnico</span>
+        </div>
+
+        <!-- Ilustração Central: Ferramenta Pura em Branco com Texto Central de Atendimento -->
+        <div class="brand-center-pure" aria-hidden="true">
+            <div class="pure-tool-icon">
+                <svg width="74" height="74" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                </svg>
+            </div>
+            <p class="pure-tool-label">Central de Atendimento</p>
+        </div>
+
+        <div class="brand-bottom-quote">
+            <p class="brand-slogan">Mais agilidade no atendimento, um melhor ambiente para todos.</p>
+            <div class="brand-cps-badge" title="Centro Paula Souza - Governo de São Paulo">
+                <img src="{{ url_for('static', filename='img/cps_logo_transparente.png') }}" alt="Centro Paula Souza" class="brand-cps-logo">
+            </div>
+        </div>
+    </aside>
+
+    <!-- Painel Direito: Formulário de Autenticação -->
+    <section class="auth-form-panel" aria-labelledby="form-heading">
+        
+        <!-- Mensagem de Feedback Discreta na Cor do Sistema (Fade Out Automático) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="discreet-flash-container" id="discreetFlashBox" aria-live="polite">
+                    {% for category, message in messages %}
+                        <div class="discreet-flash-msg flash-{{ category }}">
+                            <span class="discreet-flash-icon">
+                                {% if category == 'success' %}
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                {% else %}
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                {% endif %}
+                            </span>
+                            <span class="discreet-flash-text">{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <header class="auth-header">
+            <h1 id="form-heading" class="auth-title">Acesse o sistema</h1>
+            <p class="auth-subtitle">Use seu login institucional para continuar.</p>
+        </header>
+
+        <form action="{{ url_for('auth.login') }}" method="POST" class="auth-form" novalidate>
+            <!-- Campo de Usuário (E-mail Institucional) -->
+            <div class="form-group">
+                <label for="email" class="form-label">Usuário (e-mail institucional)</label>
+                <div class="input-with-icon">
+                    <span class="input-icon" aria-hidden="true">
+                        <!-- Ícone de Usuário -->
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </span>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        class="form-control" 
+                        placeholder="exemplo@etec.sp.gov.br" 
+                        value="{{ email or '' }}" 
+                        required 
+                        autocomplete="username"
+                        aria-required="true"
+                    >
+                </div>
+            </div>
+
+            <!-- Campo de Senha -->
+            <div class="form-group">
+                <label for="senha" class="form-label">Senha</label>
+                <div class="input-with-icon">
+                    <span class="input-icon" aria-hidden="true">
+                        <!-- Ícone de Cadeado -->
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </span>
+                    <input 
+                        type="password" 
+                        id="senha" 
+                        name="senha" 
+                        class="form-control" 
+                        placeholder="••••••••" 
+                        required 
+                        autocomplete="current-password"
+                        aria-required="true"
+                    >
+                    <button 
+                        type="button" 
+                        id="btnTogglePassword" 
+                        class="password-toggle-btn" 
+                        aria-label="Alternar visualização da senha" 
+                        tabindex="0"
+                    >
+                        <!-- Ícone de Olho / Olho Riscado -->
+                        <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botão de Ação Primária -->
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSubmitLogin">
+                <span>Entrar</span>
+            </button>
+        </form>
+
+        <!-- Atalhos com Tons Institucionais para Avaliação -->
+        <div class="prototype-helpers" role="region" aria-label="Atalhos para avaliação rápida">
+            <div class="helper-divider">
+                <span>Ou escolha um perfil para testar com 1 clique</span>
+            </div>
+            
+            <div class="quick-login-grid">
+                <a href="{{ url_for('auth.quick_login', role='professor') }}" class="quick-login-card" title="Entrar como Professor">
+                    <div class="quick-card-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                    </div>
+                    <div class="quick-card-text">
+                        <strong class="quick-role-title">Professor</strong>
+                        <span class="quick-role-name">Ana Silva</span>
+                        <span class="quick-role-email">ana.silva@etec.sp.gov.br</span>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('auth.quick_login', role='tecnico') }}" class="quick-login-card" title="Entrar como Técnico-Adm">
+                    <div class="quick-card-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                    </div>
+                    <div class="quick-card-text">
+                        <strong class="quick-role-title">Técnico-Adm</strong>
+                        <span class="quick-role-name">Carlos Souza</span>
+                        <span class="quick-role-email">carlos.souza@etec.sp.gov.br</span>
+                    </div>
+                </a>
+            </div>
+
+            <p class="credentials-hint">
+                Senha padrão para login manual: <strong>123</strong>
+            </p>
+        </div>
+
+    </section>
+
+</div>
+{% endblock %}

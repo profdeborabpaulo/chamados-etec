@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Chamado #{{ ticket.numero }}{% endblock %}
+
+{% block content %}
+<div class="page-container page-ticket-detail">
+    
+    <div class="ticket-detail-card">
+        
+        <!-- Cabeçalho do Chamado -->
+        <header class="detail-header">
+            <div class="detail-header-left">
+                <a href="{{ url_for('chamados.meus_chamados' if logged_user.perfil == 'professor' else 'chamados.lista') }}" class="btn-back" title="Voltar para a lista">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Voltar</span>
+                </a>
+                <h1 class="detail-title">Chamado #{{ ticket.numero }}</h1>
+                <div class="detail-status">
+                    {% if ticket.status == 'Em andamento' %}
+                        <span class="badge badge-andamento">Em andamento</span>
+                    {% elif ticket.status == 'Resolvido' %}
+                        <span class="badge badge-resolvido">Resolvido</span>
+                    {% elif ticket.status == 'Pendente' %}
+                        <span class="badge badge-pendente">Pendente</span>
+                    {% else %}
+                        <span class="badge badge-aberto">Aberto</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if logged_user.perfil == 'tecnico' and ticket.status != 'Resolvido' %}
+                <div class="detail-header-actions">
+                    <a href="{{ url_for('chamados.finalizar', ticket_id=ticket.id) }}" class="btn btn-primary btn-finish">
+                        Concluir Chamado
+                    </a>
+                </div>
+            {% endif %}
+        </header>
+
+        <!-- Cartão de Identificação Rápida -->
+        <div class="ticket-summary-box">
+            <div class="summary-icon-box" aria-hidden="true">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </div>
+            <div class="summary-text-box">
+                <h2 class="summary-main-title">{{ ticket.titulo }}</h2>
+                <p class="summary-meta-line">
+                    <strong>Sala:</strong> {{ ticket.sala }}
+                    {% if ticket.maquina %} | <strong>Máquina:</strong> {{ ticket.maquina }}{% endif %}
+                    | <strong>Solicitante:</strong> {{ ticket.solicitante_nome }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Abas: Informações e Histórico -->
+        <div class="detail-tabs" role="tablist">
+            <button type="button" class="tab-button active" onclick="switchDetailTab('info')" id="tabBtnInfo" role="tab" aria-selected="true">
+                Informações
+            </button>
+            <button type="button" class="tab-button" onclick="switchDetailTab('history')" id="tabBtnHistory" role="tab" aria-selected="false">
+                Histórico
+            </button>
+        </div>
+
+        <!-- Conteúdo da Aba Informações -->
+        <div class="tab-content-panel active" id="tabContentInfo" role="tabpanel">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Designado para</span>
+                    <span class="info-value">
+                        {% if ticket.tecnico_nome %}
+                            {{ ticket.tecnico_nome }} {% if logged_user.id == ticket.tecnico_id %}(Você){% endif %}
+                        {% else %}
+                            <em class="text-muted">Não atribuído ainda</em>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Data do chamado</span>
+                    <span class="info-value">{{ ticket.data_completa }}</span>
+                </div>
+
+                <div class="info-item info-full-width">
+                    <span class="info-label">Descrição</span>
+                    <p class="info-description-box">{{ ticket.descricao }}</p>
+                </div>
+
+                {% if ticket.solucao %}
+                    <div class="info-item info-full-width solution-box">
+                        <span class="info-label">Ação tomada na resolução</span>
+                        <p class="solution-text">{{ ticket.solucao }}</p>
+                        <div class="solution-meta">
+                            <span><strong>Tempo gasto:</strong> {{ ticket.tempo_minutos }} minutos</span>
+                            <span><strong>Categoria:</strong> {{ ticket.categoria }}</span>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if ticket.motivo_pendente %}
+                    <div class="info-item info-full-width pending-box">
+                        <span class="info-label">Motivo da Pendência</span>
+                        <p class="pending-text">{{ ticket.motivo_pendente }}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if logged_user.perfil == 'tecnico' and ticket.status != 'Resolvido' %}
+                <div class="bottom-action-bar">
+                    <a href="{{ url_for('chamados.finalizar', ticket_id=ticket.id) }}" class="btn btn-primary btn-block btn-lg">
+                        Concluir Chamado
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Conteúdo da Aba Histórico -->
+        <div class="tab-content-panel" id="tabContentHistory" role="tabpanel" style="display: none;">
+            <ol class="timeline-list">
+                {% for hist in ticket.historico %}
+                    <li class="timeline-item">
+                        <div class="timeline-bullet" aria-hidden="true"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-date">{{ hist.data }}</span>
+                            <p class="timeline-event">{{ hist.evento }}</p>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

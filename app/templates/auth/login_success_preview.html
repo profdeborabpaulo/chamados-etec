@@ -1,0 +1,37 @@
+{% extends 'auth/base_auth.html' %}
+
+{% block title %}Login Realizado com Sucesso{% endblock %}
+
+{% block content %}
+<div class="auth-card" style="max-width: 600px; display: block; padding: 2.5rem; text-align: center;">
+    
+    <div style="width: 72px; height: 72px; border-radius: 50%; background-color: #D1FAE5; color: #059669; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+    </div>
+
+    <h1 class="auth-title" style="margin-bottom: 0.5rem;">Sessão Iniciada!</h1>
+    <p class="auth-subtitle" style="margin-bottom: 2rem;">A autenticação da <strong>Etapa 1</strong> foi concluída com êxito.</p>
+
+    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; text-align: left;">
+        <h3 style="font-size: 1rem; color: #0F172A; margin-bottom: 0.75rem;">Dados do Usuário Autenticado:</h3>
+        <p style="margin: 0.35rem 0; color: #475569;"><strong>Nome:</strong> {{ user.get('user_nome') }}</p>
+        <p style="margin: 0.35rem 0; color: #475569;"><strong>E-mail:</strong> {{ user.get('user_email') }}</p>
+        <p style="margin: 0.35rem 0; color: #475569;"><strong>Cargo:</strong> {{ user.get('user_cargo') }}</p>
+        <p style="margin: 0.35rem 0; color: #475569;">
+            <strong>Perfil:</strong> 
+            <span style="display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background-color: {{ '#DBEAFE' if user.get('user_perfil') == 'professor' else '#D1FAE5' }}; color: {{ '#1E40AF' if user.get('user_perfil') == 'professor' else '#065F46' }};">
+                {{ 'Professor / Solicitante' if user.get('user_perfil') == 'professor' else 'Técnico / Suporte' }}
+            </span>
+        </p>
+    </div>
+
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+        <a href="{{ url_for('auth.logout') }}" class="btn" style="background-color: #F1F5F9; color: #334155; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; text-decoration: none;">
+            Voltar ao Login (Sair)
+        </a>
+    </div>
+
+</div>
+{% endblock %}
